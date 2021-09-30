@@ -1,0 +1,6 @@
+---
+
+- name: Install zabbix_frontend
+  pkgng:
+    name: zabbix_frontend
+    state: present

@@ -1,0 +1,3 @@
+---
+__zabbix_frontend_db_dir: /var/db/zabbix_frontend
+__zabbix_frontend_conf_dir: /usr/local/etc/zabbix_frontend
