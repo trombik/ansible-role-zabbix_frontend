@@ -1,37 +1,17 @@
 ---
 # tasks file for ansible-role-zabbix_frontend
 
-- include_vars: "{{ ansible_os_family }}.yml"
+- name: "Include {{ ansible_os_family }}.yml"
+  include_vars: "{{ ansible_os_family }}.yml"
 
-- include: "install-{{ ansible_os_family }}.yml"
+- name: "Include install-{{ ansible_os_family }}.yml"
+  include: "install-{{ ansible_os_family }}.yml"
 
-- name: Create log directory
-  file:
-    path: "{{ zabbix_frontend_log_dir }}"
-    mode: 0755
-    owner: "{{ zabbix_frontend_user }}"
-    group: "{{ zabbix_frontend_group }}"
-    state: directory
-  notify: Restart zabbix_frontend
-
-- name: Create db directory
-  file:
-    path: "{{ zabbix_frontend_db_dir }}"
-    mode: 0755
-    owner: "{{ zabbix_frontend_user }}"
-    group: "{{ zabbix_frontend_group }}"
-    state: directory
-  notify: Restart zabbix_frontend
-
-- name: Create zabbix_frontend.conf
+- name: Create zabbix_frontend_conf_file
   template:
-    src: zabbix_frontend.conf.j2
+    src: zabbix.conf.php.j2
     dest: "{{ zabbix_frontend_conf_file }}"
-    validate: echo %s
-  notify: Restart zabbix_frontend
-
-- name: Start zabbix_frontend
-  service:
-    name: "{{ zabbix_frontend_service }}"
-    enabled: true
-    state: started
+    # validate: echo %s
+    mode: '0640'
+    owner: "{{ zabbix_frontend_user }}"
+    group: "{{ zabbix_frontend_group }}"

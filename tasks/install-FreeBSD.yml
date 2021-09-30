@@ -1,6 +1,13 @@
 ---
 
-- name: Install zabbix_frontend
+- name: Install zabbix_frontend_package
   pkgng:
-    name: zabbix_frontend
+    name: "{{ zabbix_frontend_package }}"
+    pkgsite: local
+    state: present
+
+- name: Install zabbix_frontend_extra_packages
+  pkgng:
+    name: "{{ zabbix_frontend_extra_packages }}"
+    pkgsite: local
     state: present

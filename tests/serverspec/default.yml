@@ -1,6 +1,221 @@
 ---
 - hosts: localhost
   roles:
+    - role: trombik.freebsd_pkg_repo
+    - role: trombik.php_fpm
+    - role: trombik.nginx
     - ansible-role-zabbix_frontend
   vars:
-    zabbix_frontend_config: ""
+    # XXX note that `<?php` at the begining of the file should not be in `zabbix_frontend_config`,
+    # which is appended by zabbix.conf.php.j2
+    zabbix_frontend_config: |
+      // Zabbix GUI configuration file.
+
+      $DB['TYPE']				= 'POSTGRESQL';
+      $DB['SERVER']			= 'localhost';
+      $DB['PORT']				= '0';
+      $DB['DATABASE']			= 'zabbix';
+      $DB['USER']				= 'zabbix';
+      $DB['PASSWORD']			= 'password';
+
+      // Schema name. Used for PostgreSQL.
+      $DB['SCHEMA']			= '';
+
+      // Used for TLS connection.
+      $DB['ENCRYPTION']		= true;
+      $DB['KEY_FILE']			= '';
+      $DB['CERT_FILE']		= '';
+      $DB['CA_FILE']			= '';
+      $DB['VERIFY_HOST']		= false;
+      $DB['CIPHER_LIST']		= '';
+
+      // Vault configuration. Used if database credentials are stored in Vault secrets manager.
+      $DB['VAULT_URL']		= '';
+      $DB['VAULT_DB_PATH']	= '';
+      $DB['VAULT_TOKEN']		= '';
+
+      // Use IEEE754 compatible value range for 64-bit Numeric (float) history values.
+      // This option is enabled by default for new Zabbix installations.
+      // For upgraded installations, please read database upgrade notes before enabling this option.
+      $DB['DOUBLE_IEEE754']	= true;
+
+      $ZBX_SERVER				= 'localhost';
+      $ZBX_SERVER_PORT		= '10051';
+      $ZBX_SERVER_NAME		= 'my zabbix';
+
+      $IMAGE_FORMAT_DEFAULT	= IMAGE_FORMAT_PNG;
+
+      // Uncomment this block only if you are using Elasticsearch.
+      // Elasticsearch url (can be string if same url is used for all types).
+      //$HISTORY['url'] = [
+      //	'uint' => 'http://localhost:9200',
+      //	'text' => 'http://localhost:9200'
+      //];
+      // Value types stored in Elasticsearch.
+      //$HISTORY['types'] = ['uint', 'text'];
+
+      // Used for SAML authentication.
+      // Uncomment to override the default paths to SP private key, SP and IdP X.509 certificates, and to set extra settings.
+      //$SSO['SP_KEY']			= 'conf/certs/sp.key';
+      //$SSO['SP_CERT']			= 'conf/certs/sp.crt';
+      //$SSO['IDP_CERT']		= 'conf/certs/idp.crt';
+      //$SSO['SETTINGS']		= [];
+
+    # XXX use my own package repository as the package in the official package
+    # tree does not includ postgresql support
+    freebsd_pkg_repo:
+      local:
+        enabled: "true"
+        state: present
+        url: "http://pkg.i.trombik.org/{{ ansible_distribution_version | regex_replace('\\.') }}{{ ansible_architecture }}-default-default"
+        priority: 99
+
+    # _______________________________________________nginx
+    www_root_dir: "{% if ansible_os_family == 'FreeBSD' %}/usr/local/www/zabbix54{% endif %}"
+    nginx_flags: -q
+    nginx_config: |
+      {% if ansible_os_family == 'Debian' or ansible_os_family == 'RedHat' %}
+      user {{ nginx_user }};
+      pid /run/nginx.pid;
+      {% endif %}
+      worker_processes 1;
+      error_log {{ nginx_error_log_file }};
+      events {
+        worker_connections 1024;
+      }
+      http {
+        include {{ nginx_conf_dir }}/mime.types;
+        access_log {{ nginx_access_log_file }};
+        default_type application/octet-stream;
+        sendfile on;
+        keepalive_timeout 65;
+        server {
+          listen 80;
+          server_name localhost;
+          root {{ www_root_dir }};
+          location / {
+            index index.html index.php;
+          }
+          # see https://www.nginx.com/resources/wiki/start/topics/examples/phpfcgi/
+          location ~ [^/]\.php(/|$) {
+            fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+            if (!-f $document_root$fastcgi_script_name) {
+              return 404;
+            }
+            fastcgi_param HTTP_PROXY "";
+            fastcgi_pass 127.0.0.1:9000;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_intercept_errors on;
+            include {{ nginx_conf_dir }}/fastcgi_params;
+          }
+          error_page 500 502 503 504 /50x.html;
+          location = /50x.html {
+          }
+        }
+      }
+    nginx_config_fragments: []
+    nginx_extra_packages_by_os:
+      FreeBSD: []
+      OpenBSD: []
+      Debian:
+        - nginx-extras
+      RedHat: []
+    nginx_extra_packages: "{{ nginx_extra_packages_by_os[ansible_os_family] }}"
+    redhat_repo:
+      epel:
+        mirrorlist: "http://mirrors.fedoraproject.org/mirrorlist?repo=epel-{{ ansible_distribution_major_version }}&arch={{ ansible_architecture }}"
+        gpgcheck: yes
+        enabled: yes
+
+    nginx_htpasswd_users: []
+
+    # _______________________________________________php_fpm
+    php_version: 7.4
+    php_additional_packages_map:
+      FreeBSD:
+        - "archivers/php{{ php_version_without_dot }}-zip"
+        - "textproc/php{{ php_version_without_dot }}-xsl"
+        - "databases/php{{ php_version_without_dot }}-pgsql"
+      OpenBSD:
+        - "php-zip%{{ php_version }}"
+        - "php-xsl%{{ php_version }}"
+        - "php-pgsql%{{ php_version }}"
+      Debian:
+        - "php{{ php_version }}-zip"
+        - "php{{ php_version }}-xsl"
+        - "php{{ php_version }}-pgsql"
+    php_additional_packages: "{{ php_additional_packages_map[ansible_os_family] }}"
+
+    php_ini_config: |
+      [PHP]
+      engine = On
+      short_open_tag = Off
+      precision = 14
+      output_buffering = 4096
+      zlib.output_compression = Off
+      implicit_flush = Off
+      unserialize_callback_func =
+      serialize_precision = -1
+      disable_functions =
+      disable_classes =
+      zend.enable_gc = On
+      expose_php = On
+      max_execution_time = 30
+      max_input_time = 60
+      memory_limit = 128M
+      error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+      display_errors = Off
+      display_startup_errors = Off
+      log_errors = On
+      log_errors_max_len = 1024
+      ignore_repeated_errors = Off
+      ignore_repeated_source = Off
+      report_memleaks = On
+      html_errors = On
+      variables_order = "GPCS"
+      request_order = "GP"
+      register_argc_argv = Off
+      auto_globals_jit = On
+      post_max_size = 8M
+      auto_prepend_file =
+      auto_append_file =
+      default_mimetype = "text/html"
+      default_charset = "UTF-8"
+      doc_root =
+      user_dir =
+      enable_dl = Off
+      file_uploads = On
+      upload_max_filesize = 2M
+      max_file_uploads = 20
+      allow_url_fopen = On
+      allow_url_include = Off
+      default_socket_timeout = 60
+
+      ; for zabbix
+      ; see https://www.zabbix.com/documentation/current/manual/installation/frontend
+      post_max_size = 16M
+      max_execution_time = 300
+      max_input_time = 300
+
+      [CLI Server]
+      cli_server.color = On
+
+    php_fpm_config: |
+      [global]
+      pid = {{ php_fpm_pid_file }}
+      error_log = {{ php_fpm_log_dir }}/php-fpm.log
+      include = {{ php_fpm_pool_dir }}/*.conf
+    php_fpm_pool_config:
+      - name: www
+        content: |
+          [www]
+          user = {{ php_fpm_user }}
+          group = {{ php_fpm_group }}
+          listen = 127.0.0.1:9000
+          pm = dynamic
+          pm.max_children = 10
+          pm.start_servers = 2
+          pm.min_spare_servers = 1
+          pm.max_spare_servers = 3
+          access.log = {{ php_fpm_log_dir }}/access.log

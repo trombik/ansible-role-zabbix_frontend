@@ -1,9 +1,7 @@
 ---
-zabbix_frontend_user: zabbix_frontend
-zabbix_frontend_group: zabbix_frontend
-zabbix_frontend_log_dir: /var/log/zabbix_frontend
-zabbix_frontend_db_dir: "{{ __zabbix_frontend_db_dir }}"
-zabbix_frontend_service: zabbix_frontend
+zabbix_frontend_user: "{{ __zabbix_frontend_user }}"
+zabbix_frontend_group: "{{ __zabbix_frontend_group }}"
+zabbix_frontend_package: "{{ __zabbix_frontend_package }}"
+zabbix_frontend_extra_packages: []
 zabbix_frontend_conf_dir: "{{ __zabbix_frontend_conf_dir }}"
-zabbix_frontend_conf_file: "{{ __zabbix_frontend_conf_dir }}/zabbix_frontend.conf"
-zabbix_frontend_flags: ""
+zabbix_frontend_conf_file: "{{ zabbix_frontend_conf_dir }}/zabbix.conf.php"

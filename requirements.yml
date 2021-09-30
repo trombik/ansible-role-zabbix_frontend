@@ -1,0 +1,5 @@
+---
+roles:
+  - name: trombik.nginx
+  - name: trombik.php_fpm
+  - name: trombik.freebsd_pkg_repo
