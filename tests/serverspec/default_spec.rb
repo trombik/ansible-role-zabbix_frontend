@@ -7,6 +7,13 @@ ports   = [80, 9000]
 user = "www"
 group = "www"
 
+case os[:family]
+when "ubuntu"
+  user = "www-data"
+  group = "www-data"
+  config = "/usr/share/zabbix/conf/zabbix.conf.php"
+  package = "zabbix-frontend-php"
+end
 describe package(package) do
   it { should be_installed }
 end

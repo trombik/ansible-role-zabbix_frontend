@@ -1,11 +1,30 @@
 ---
 - hosts: localhost
+    # XXX update ca-certificates. the one on test virtual machine is old,
+    # which causes failure when adding apt repository
+  pre_tasks:
+    - name: Install ca-certificates
+      ansible.builtin.apt:
+        name: ca-certificates
+        update_cache: yes
+        state: latest
+      when: ansible_os_family == 'Debian'
   roles:
     - role: trombik.freebsd_pkg_repo
+      when: ansible_os_family == 'FreeBSD'
     - role: trombik.php_fpm
     - role: trombik.nginx
+    - role: trombik.apt_repo
+      when: ansible_os_family == 'Debian'
     - ansible-role-zabbix_frontend
   vars:
+    apt_repo_enable_apt_transport_https: yes
+    # https://repo.zabbix.com/zabbix/5.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_5.4-1+ubuntu20.04_all.deb
+    apt_repo_keys_to_add:
+      - https://repo.zabbix.com/zabbix-official-repo.key
+    apt_repo_to_add:
+      - "deb https://repo.zabbix.com/zabbix/5.4/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+      - "deb-src https://repo.zabbix.com/zabbix/5.4/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
     # XXX note that `<?php` at the begining of the file should not be in `zabbix_frontend_config`,
     # which is appended by zabbix.conf.php.j2
     zabbix_frontend_config: |
@@ -71,7 +90,10 @@
         priority: 99
 
     # _______________________________________________nginx
-    www_root_dir: "{% if ansible_os_family == 'FreeBSD' %}/usr/local/www/zabbix54{% endif %}"
+    os_www_root_dir:
+      FreeBSD: /usr/local/www/zabbix54
+      Debian: /usr/share/zabbix
+    www_root_dir: "{{ os_www_root_dir[ansible_os_family] }}"
     nginx_flags: -q
     nginx_config: |
       {% if ansible_os_family == 'Debian' or ansible_os_family == 'RedHat' %}

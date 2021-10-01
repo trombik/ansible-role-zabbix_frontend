@@ -1,0 +1,11 @@
+---
+
+- name: Install zabbix_frontend_package
+  ansible.builtin.apt:
+    name: "{{ zabbix_frontend_package }}"
+    state: present
+
+- name: Install zabbix_frontend_extra_packages
+  ansible.builtin.apt:
+    name: "{{ zabbix_frontend_extra_packages }}"
+    state: present
