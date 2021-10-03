@@ -1,6 +1,5 @@
 ---
 __zabbix_frontend_user: www
 __zabbix_frontend_group: www
-__zabbix_frontend_service: zabbix_frontend
 __zabbix_frontend_conf_dir: /usr/local/www/zabbix54/conf
 __zabbix_frontend_package: zabbix54-frontend
