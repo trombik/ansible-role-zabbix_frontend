@@ -8,6 +8,9 @@ user = "www"
 group = "www"
 
 case os[:family]
+when "openbsd"
+  package = "zabbix-web"
+  config = "/var/www/zabbix/conf/zabbix.conf.php"
 when "ubuntu"
   user = "www-data"
   group = "www-data"

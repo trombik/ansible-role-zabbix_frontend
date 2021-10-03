@@ -1,0 +1,11 @@
+---
+
+- name: Install zabbix_frontend_package
+  community.general.openbsd_pkg:
+    name: "{{ zabbix_frontend_package }}"
+    state: present
+
+- name: Install zabbix_frontend_extra_packages
+  community.general.openbsd_pkg:
+    name: "{{ zabbix_frontend_extra_packages }}"
+    state: present
