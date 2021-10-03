@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: zabbix_frontend
   author: Tomoyuki Sakurai
-  description: Configures something
+  description: Configures zabbix frontend
   company: N/A
   license: BSD
   min_ansible_version: 2.0
@@ -17,4 +17,4 @@ galaxy_info:
       versions:
         - focal
   galaxy_tags:
-    - system
+    - zabbix
