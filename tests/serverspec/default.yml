@@ -1,14 +1,5 @@
 ---
 - hosts: localhost
-    # XXX update ca-certificates. the one on test virtual machine is old,
-    # which causes failure when adding apt repository
-  pre_tasks:
-    - name: Install ca-certificates
-      ansible.builtin.apt:
-        name: ca-certificates
-        update_cache: yes
-        state: latest
-      when: ansible_os_family == 'Debian'
   roles:
     - role: trombik.freebsd_pkg_repo
       when: ansible_os_family == 'FreeBSD'
@@ -93,6 +84,7 @@
     os_www_root_dir:
       FreeBSD: /usr/local/www/zabbix54
       Debian: /usr/share/zabbix
+      OpenBSD: /var/www/zabbix
     www_root_dir: "{{ os_www_root_dir[ansible_os_family] }}"
     nginx_flags: -q
     nginx_config: |
@@ -214,11 +206,20 @@
       allow_url_include = Off
       default_socket_timeout = 60
 
+      {% if ansible_os_family == 'OpenBSD' %}
+      ; see /etc/php-7.4.sample/zabbix.ini
+      post_max_size = 32M
+      memory_limit = 256M
+      upload_max_filesize = 16M
+      max_execution_time = 600
+      max_input_time = 600
+      {% else %}
       ; for zabbix
       ; see https://www.zabbix.com/documentation/current/manual/installation/frontend
       post_max_size = 16M
       max_execution_time = 300
       max_input_time = 300
+      {% endif %}
 
       [CLI Server]
       cli_server.color = On
