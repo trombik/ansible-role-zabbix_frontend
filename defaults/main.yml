@@ -5,3 +5,4 @@ zabbix_frontend_package: "{{ __zabbix_frontend_package }}"
 zabbix_frontend_extra_packages: []
 zabbix_frontend_conf_dir: "{{ __zabbix_frontend_conf_dir }}"
 zabbix_frontend_conf_file: "{{ zabbix_frontend_conf_dir }}/zabbix.conf.php"
+zabbix_frontend_web_root: "{{ __zabbix_frontend_web_root }}"
