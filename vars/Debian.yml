@@ -3,3 +3,4 @@ __zabbix_frontend_user: www-data
 __zabbix_frontend_group: www-data
 __zabbix_frontend_conf_dir: /usr/share/zabbix/conf
 __zabbix_frontend_package: zabbix-frontend-php
+__zabbix_frontend_web_root: /usr/share/zabbix

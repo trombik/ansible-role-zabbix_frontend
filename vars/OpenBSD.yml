@@ -3,3 +3,4 @@ __zabbix_frontend_user: www
 __zabbix_frontend_group: www
 __zabbix_frontend_conf_dir: /var/www/zabbix/conf
 __zabbix_frontend_package: zabbix-web
+__zabbix_frontend_web_root: /var/www/zabbix

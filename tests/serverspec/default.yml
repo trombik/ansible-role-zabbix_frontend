@@ -4,10 +4,10 @@
     - role: trombik.freebsd_pkg_repo
       when: ansible_os_family == 'FreeBSD'
     - role: trombik.php_fpm
-    - role: trombik.nginx
     - role: trombik.apt_repo
       when: ansible_os_family == 'Debian'
     - ansible-role-zabbix_frontend
+    - role: trombik.nginx
   vars:
     apt_repo_enable_apt_transport_https: yes
     # https://repo.zabbix.com/zabbix/5.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_5.4-1+ubuntu20.04_all.deb
@@ -81,11 +81,6 @@
         priority: 99
 
     # _______________________________________________nginx
-    os_www_root_dir:
-      FreeBSD: /usr/local/www/zabbix54
-      Debian: /usr/share/zabbix
-      OpenBSD: /var/www/zabbix
-    www_root_dir: "{{ os_www_root_dir[ansible_os_family] }}"
     nginx_flags: -q
     nginx_config: |
       {% if ansible_os_family == 'Debian' or ansible_os_family == 'RedHat' %}
@@ -106,7 +101,7 @@
         server {
           listen 80;
           server_name localhost;
-          root {{ www_root_dir }};
+          root {{ zabbix_frontend_web_root }};
           location / {
             index index.html index.php;
           }
