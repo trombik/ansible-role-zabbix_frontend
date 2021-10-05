@@ -13,9 +13,10 @@
     # https://repo.zabbix.com/zabbix/5.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_5.4-1+ubuntu20.04_all.deb
     apt_repo_keys_to_add:
       - https://repo.zabbix.com/zabbix-official-repo.key
+
     apt_repo_to_add:
-      - "deb https://repo.zabbix.com/zabbix/5.4/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
-      - "deb-src https://repo.zabbix.com/zabbix/5.4/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+      - "deb https://repo.zabbix.com/zabbix/5.4/{% if ansible_distribution == 'Devuan' %}debian {{ apt_repo_codename_devuan_to_debian[ansible_distribution_release] }} main{% else %}{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main {% endif %}"
+      - "deb-src https://repo.zabbix.com/zabbix/5.4/{% if ansible_distribution == 'Devuan' %}debian {{ apt_repo_codename_devuan_to_debian[ansible_distribution_release] }} main{% else %}{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main {% endif %}"
     # XXX note that `<?php` at the begining of the file should not be in `zabbix_frontend_config`,
     # which is appended by zabbix.conf.php.j2
     zabbix_frontend_config: |
@@ -140,7 +141,7 @@
     nginx_htpasswd_users: []
 
     # _______________________________________________php_fpm
-    php_version: 7.4
+    # php_version: {% if ansible_distribution =='Devuan' %}7.3{% else %}7.4{% endif %}
     php_additional_packages_map:
       FreeBSD:
         - "archivers/php{{ php_version_without_dot }}-zip"
