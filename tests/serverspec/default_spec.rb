@@ -11,7 +11,7 @@ case os[:family]
 when "openbsd"
   package = "zabbix-web"
   config = "/var/www/zabbix/conf/zabbix.conf.php"
-when "ubuntu"
+when "ubuntu", "devuan"
   user = "www-data"
   group = "www-data"
   config = "/usr/share/zabbix/conf/zabbix.conf.php"
